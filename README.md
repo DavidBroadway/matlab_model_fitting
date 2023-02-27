@@ -22,3 +22,50 @@ The initialisation function that has the same name as the model class
             obj.XVariable = "freq_list";
         end
 ```
+ParamDefn: is a list of the names of all the parameters that will be checked against for defining the fit parameters, this includes the x-data name. 
+ParamUnits: Is the units of all of the parameters. This is only used for displaying the results so it is not critical but is nice to have. 
+XVariable: Defines the name of the x-data
+
+Then we need to define the function that will define the fit function for us.  
+
+```
+        function defineFitFunction(obj)
+            % Define the x-vector
+            obj.functionArg{1} = "x";
+            functionArg = obj.functionArg;
+
+            % Define the fit in terms of the fitting parameters
+            obj.FitFunction = @(v, x) obj.model(...
+                eval(functionArg{1}), ...
+                eval(functionArg{2}), ...
+                eval(functionArg{3}), ...
+                eval(functionArg{4}), ...
+                eval(functionArg{5}), ...
+                eval(functionArg{6}) ...
+                                    ); 
+        end
+```
+In this function you need to define which argument in your model is the x-variable. I would recomend just defining this as the first parameter all of the time. Then you need to write a call to the model function that contains enough arguments. Note that you need the eval function for each functionArg to make this work correctly. 
+
+Finally you need to define your model itself. This can take any form that you want. In the example it is given as
+```
+        function signal = model(obj, freq_list, Central_freq, ...
+                background_counts, contrast, width, splitting)
+            %Function for defining the signal which is the model 
+           
+            Counts1 = obj.lorentzian(freq_list, background_counts, Central_freq - 0.5*splitting, width, contrast);
+            Counts2 = obj.lorentzian(freq_list, background_counts, Central_freq + 0.5*splitting, width, contrast);
+            signal = Counts1 - Counts2;
+        end
+
+
+
+        function Counts = lorentzian(obj, freq_list, background_counts, Central_freq, width, contrast)
+                %Function for defining a lorenztian ODMR signal with shot noise. 
+                Counts =  background_counts * (1 - contrast ./ (1 + (freq_list - Central_freq).^2/ (0.5*width).^2));
+        end
+
+```
+
+
+
